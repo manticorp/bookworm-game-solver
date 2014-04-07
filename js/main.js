@@ -163,7 +163,7 @@ $(function(){
         }
         
         // The game would start after the dictionary was loaded
-        startGame(boardType);
+        startGame();
     });
     
     $('#controls').submit(function(){
@@ -197,7 +197,9 @@ $(function(){
         loadState();
     });
     
-    function startGame( variant ){
+    function startGame(){
+        var state = $.deparam.fragment();
+        variant = state.boardType || boardType;
         makeGameBoard( variant );
         loadState(); 
     }
