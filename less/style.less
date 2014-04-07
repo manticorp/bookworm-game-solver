@@ -1,0 +1,229 @@
+body {
+    background: url("img/lightpaperfibers.png");
+}
+pre {
+    display: block;
+    overflow: scroll;
+    text-wrap: normal;
+    max-width: 100%;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+input { font-family: 'Droid Sans', sans-serif }
+
+.loading-gif-fancy{
+    width: 256px;
+    
+}
+
+.btn {
+}
+input {
+}
+
+
+.clearfix {
+    display: block;
+    clear: both;
+}
+
+#controls {
+    display: block;
+    clear: both;
+    margin: 12px 0 24px;
+}
+
+#level {
+    width: 42px;
+    text-align: center;
+}
+
+#controls button {
+    width: 64px;
+}
+
+#controls button#go {
+    
+}
+
+.highlight {
+    background-color: fade(rgb(200,0,200), 10%) !important;
+}
+
+.cell-working {
+    background-color: rgba(40,40,200,0.5) !important;
+}
+
+.working-done {
+    background-color: rgba(20, 230, 20, 0.5) !important;
+}
+
+#game-container {
+    clear: both;
+    display: block;
+    min-height: 1px;
+    overflow: auto;
+    #game-board{
+        display: inline-block;
+        overflow: auto;
+        .game-col {
+            float: left;
+            display: block;
+            box-sizing: normal;
+            width: 32px;
+            margin: 0 2px 0 0;
+            &.odd {
+                padding-top: 17px;
+            }
+            .game-cell {
+                float: left;
+                clear:both;
+                box-sizing: border-box;
+                border: 3px outset #ba9a5c;
+                border-radius: 4px;
+                background: #dbc08c;
+                color: black;
+                display: block;
+                float: left;
+                font-weight: 500;
+                font-family: Helvetica, Verdana, sans-serif;
+                margin: 1px 0;
+                padding: 0;
+                height: 32px;
+                text-align: center;
+                width: 32px;
+                .game-cell-input-cont {
+                    height: 100%;
+                    background-repeat: no-repeat;
+                    .game-cell-input {
+                        box-sizing: border-box;
+                        border: none;
+                        background: transparent;
+                        border-radius: 2px;
+                        color: black;
+                        display: block;
+                        float: left;
+                        font-weight: 500;
+                        font-family: Helvetica, Verdana, sans-serif;
+                        height: 26px;
+                        margin: 0;
+                        text-align: center;
+                        width: 26px;
+                    }
+                }                   
+                &.special-1 {
+                    background-color: #15c117;
+                }
+                &.special-2 {
+                    background-color: #ecd025;
+                }
+                &.special-3 {
+                    background-color: #65c6f1;
+                }
+                &.special-4 {
+                    background-color: #e1e0df;
+                }
+                &.special-5 {
+                    background-color: #fd3b12;
+                }
+            }
+        }
+    }
+}
+
+[class*="points"] {
+    background-image: url('img/points-3-small.png');
+}
+
+.points-1 {
+    background-position: 22px 22px;
+}
+
+.points-2 {
+    background-position: 18px 22px;
+}
+
+.points-3 {
+    background-position: 14px 22px;
+}
+
+.used {
+    .circle-indicator(rgba(99,92,0,1));
+}
+
+.used-start {
+    .circle-indicator(rgba(20, 200, 20, 0.5));
+}
+
+.used-end {
+    .circle-indicator(rgba(255, 20, 20, 1));
+}
+
+.static-used {
+    background: rgba(200, 200, 20, 0.5) !important;
+}
+
+.static-used-start {
+    background: rgba(20, 200, 20, 0.5) !important;
+}
+
+.static-used-end {
+    background: rgba(200, 20, 20, 0.5) !important;
+}
+
+.circle-indicator(@color: rgba(255,20,20,1)){
+    @tcolor: fade(@color, 0%);
+    background: @color !important;
+    background: -moz-radial-gradient(15% 15%, ellipse cover, @color 0%, @color 5%, @tcolor 6%, @tcolor 100%) !important;
+    background: -webkit-radial-gradient(15% 15%, ellipse cover, @color 0%, @color 5%, @tcolor 6%, @tcolor 100%) !important;
+    background: -o-radial-gradient(15% 15%, ellipse cover, @color 0%, @color 5%, @tcolor 6%, @tcolor 100%) !important;
+    background: -ms-radial-gradient(15% 15%, ellipse cover, @color 0%, @color 5%, @tcolor 6%, @tcolor 100%) !important;
+    background: radial-gradient(ellipse at 15% 15%, @color 0%, @color 5%, @tcolor 6%, @tcolor 100%) !important;
+}
+
+#result {
+    .result-word {
+        .result-word-span {
+            color: #333;
+            font-weight: 900;
+            font-family: Lucida Console, Consolas, Monospace;
+            .letter {
+                padding: 0 2px;
+                &.special-1 {
+                    background-color: fade(#15c117, 60%);
+                }
+                &.special-2 {
+                    background-color: fade(#ecd025, 60%);
+                }
+                &.special-3 {
+                    background-color: fade(#65c6f1, 60%);
+                }
+                &.special-4 {
+                    background-color: fade(#e1e0df, 100%);
+                }
+                &.special-5 {
+                    background-color: fade(#fd3b12, 60%);
+                }
+            }
+        }
+        .result-score {
+            color: #333;
+            display: inline-block;
+            margin-left: 1em;
+        }
+    }
+    table {
+        tr {
+            td {
+                .btn {
+                    margin-right: 6px;
+                }
+            }
+        }
+    }
+}
