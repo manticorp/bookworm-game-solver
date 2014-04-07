@@ -212,11 +212,16 @@ $(function(){
     
     function loadState(){
         var state   = $.deparam.fragment();
-        level       = state.level;
         grid        = state.grid;
         
         if(typeof state.boardType !== "undefined"){
-            boardType   = state.boardType;
+            boardType = state.boardType;
+        }
+        
+        if(typeof state.level !== "undefined"){
+            level = state.level;
+        } else {
+            level = 1;
         }
         
         $theInputs  = $('.game-cell-input');

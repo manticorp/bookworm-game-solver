@@ -78,6 +78,6 @@
         <script type="text/javascript" src="http://code.jquery.com/jquery-2.1.0.min.js"></script>
         <script type="text/javascript" src="js/jquery.ba-bbq.min.js"></script>
         <script type="text/javascript" src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
-        <script type="text/javascript" src="js/main.min.js"></script>
+        <script type="text/javascript" src="js/main.js"></script>
     </body>
 </html>
