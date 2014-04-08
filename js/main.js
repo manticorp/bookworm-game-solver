@@ -665,7 +665,7 @@ $(function(){
             
             wordvalue = wordvalue + bookworm.charScores[letter]; 
             word  = word + letter;
-            bonus = bonus + bookworm.specialMultipliers[special];
+            bonus = bonus + parseInt(bookworm.specialMultipliers[parseInt(special)]);
         });
         score = ((parseInt(options.level) + wordvalue) * (parseInt(bonus) + word.length)) * 10;
         console.log(word + " ( (lv) " + options.level + " + (wv) " + wordvalue + " ) * ( (bn) " + bonus + " + (wl) " + word.length + " ) *10 = " + score );
