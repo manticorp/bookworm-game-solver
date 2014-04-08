@@ -484,6 +484,11 @@ $(function(){
         $table.append($tbody);
         options.timer.addCheck("Append Table to Result");
         $result.append($table);
+        
+        if($(window).width() >= 992){
+            var $rCol = $('#result-col');
+            $rCol.css('max-height',$(window).height() + "px");
+        }
     }
     
     function buildColoredWord(used){

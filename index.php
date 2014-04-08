@@ -31,10 +31,6 @@
     <body>
         <div class="container">
             <div class="row">
-                <div class="col-md-12">
-                </div>
-            </div>
-            <div class="row">
                 <div class="col-md-6">
                     <h2>Input</h2>
                     <form id="controls" role="form" class="form-inline" method="POST" action="">
@@ -64,7 +60,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-6" id="result-col">
                     <div class="row">
                         <div class="col-sm-12">
                             <h2  id="result-title">Result</h2>
