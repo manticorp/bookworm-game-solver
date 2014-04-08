@@ -1,61 +1,19 @@
-$(function(){
-    var loading = {
-        event: null,
-        number: 0,
-        texts: [
-            "Dispatching Gremlins",
-            "Applying Magic Powder",
-            "Buttering Unicorns",
-            "Marinating API Result",
-            "BBQing BiBTeX",
-            "Roasting Gnome Hats"
-        ],
-        start: function(){
-            this.stop();
-            $loadingbox = $('<div class="loadingbox">').append($('<p id="loadingText"></p>')).append($('<img class="loading-gif-fancy" src="img/loading-fancy.gif" alt="loading..."/>'));
-            $('#result').html('').append($loadingbox);
-            var that = this;
-            $('#result #loadingText').text(this.texts[0] + "...");
-            this.event = setInterval(function(){
-                $('#result #loadingText').text(that.randomText() + "...");
-            },750);
-        },
-        stop: function(){
-            clearInterval(this.event);
-        },
-        randomText: function(){
-            return this.texts[Math.floor(Math.random()*this.texts.length)];
-        }
-    };
-    
+$(function(){    
+    /**
+     * This variable stores variables related to the bookworm
+     * game itself, such as letter scores and level multipliers.
+     *
+     * bookworm.variants            is game board layouts in length of columns
+     * bookworm.specialMultipliers  the extra points for bonus tiles
+     * bookworm.charScors           scores for each letter
+     * bookworm.charDots            the amount of dots to display next to char
+     */
     var bookworm = {
         variants: {
             web:    [7,8,7,8,7,8,7],
             tiny:   [1,2,1],
             small:  [2,3,2],
             med:    [3,4,3,4,3]
-        },
-        levelMultipliers: {
-            1: 1,
-            2: 2,
-            3: 3, 
-            4: 4,
-            5: 5,
-            6: 6,
-            7: 7,
-            8: 8,
-            9: 9,
-            10: 10,
-            11: 11,
-            12: 12,
-            13: 13,
-            14: 14,
-            15: 15,
-            16: 16,
-            17: 17,
-            18: 18,
-            19: 19,
-            20: 20
         },
         specialMultipliers: {
             1: 2,
@@ -129,18 +87,30 @@ $(function(){
         }
     };
     
+    /**
+     * A bunch of options and states.
+     * 
+     * timer                = STimer object (defined below)
+     * level                = the game level
+     * variant              = the game variant (see bookworm above)
+     * dict                 = where the dictionary gets loaded, dict[word] = true;
+     * mapped               = for speeding things up later, a map of all beginning
+     *                        word fragments in the pattern:
+     *                          
+     *                          var string = "abc";
+     *                          for(i = 0; i < string.length; i++){
+     *                              mapped[string.substring(0,string.length-i)] = true;
+     *                          }
+     *
+     * isOn                 = records if analysis is on or not
+     */
     var options = {
         timer: new STimer(),
         level: 1,
         variant: "web",
         dict: {},
-        words: [],
         mapped: {},
-        firstFirstLetters: {},
-        lastFirstLetters: {},
-        isOn: false,
-        maxDepth: 0,
-        checked: 0
+        isOn: false
     };
     
     var $board = $('<div>').attr('id','game-board');
@@ -154,26 +124,22 @@ $(function(){
     var permaHighlighted = false;
      
     // Do a jQuery Ajax request for the text dictionary
-    $.get( "words.txt", function( txt ) {
-        // Get an array of all the words
-        options.words = txt.split( "\n" );
-     
+    $.getJSON( "words.json", function( words ) {
+        var ttimer = new STimer();
+        ttimer.start("Processing Dictionary");
+        ttimer.check("Starting...");
         // And add them as properties to the dictionary lookup
         // This will allow for fast lookups later
-        for ( var i = 0; i < options.words.length; i++ ) {
-            options.dict[ options.words[i] ] = true;
-            options.lastFirstLetters[options.words[i][0]] = i;
-            if(!options.firstFirstLetters.hasOwnProperty(options.words[i][0])){
-                options.firstFirstLetters[options.words[i][0]] = i;
+        for ( var i = 0; i < words.length; i++ ) {
+            ttimer.addAverageStart("Processing word")
+            options.dict[ words[i] ] = true;
+            for(var j = 0; j < words[i].length; j++){
+                options.mapped[words[i].substr(0,(words[i].length - j))] = true;
             }
-            
-            var chars = options.words[i].split('');
-            var word = "";
-            for(var w = 0; w < chars.length; w++){
-                word = word + chars[w];
-                if(!options.mapped.hasOwnProperty(word)) options.mapped[word] = true;
-            }
+            ttimer.addAverageStop("Processing word")
         }
+        ttimer.stop();
+        ttimer.consoleResults();
         // The game would start after the dictionary was loaded
         startGame();
     });
@@ -188,11 +154,10 @@ $(function(){
             $('#result').html('');
             $('#result-title').text('Result (working...)');
             loading.start();
-            options.checked = 0;
             options.timer.start();
             options.level = $('#level').val() || 1;
             saveState();
-            setTimeout(findWords, 100);
+            setTimeout(findWords, 10);
         } else {
             $('#result').html($('<p>Please complete the gameboard.</p>'));
             $('#result-title').text('Result');
@@ -457,34 +422,19 @@ $(function(){
         var ordered = orderResultsByScore(results);
         
         options.timer.addCheck("Build Table");
-        $table = $("<table>")
-            .attr('id', 'results-table')
-            .addClass('table')
-            .addClass('table-bordered')
-            .addClass('table-condensed')
-            .addClass('table-striped');
-        $thead = $("<thead>").append($("<tr>").append($('<th>Word</th>')).append($('<th>Score</th>')).append($('<th>Controls</th>')));
-        $table.append($thead);
+        $table = $("<table id='results-table' class='table table-bordered table-condensed table-striped'></table>")
+        .append("<thead><tr><th>Word</th><th>Score</th><th>Controls</th></thead>");
         
-        $tbody = $('<tbody>');
+        var $tbody = $('<tbody>');
         for(l = (ordered.words.length-1); l >= 0; l--){
-            $trow = $('<tr>');
+            var $trow = $('<tr>');
             $trow.data("used", ordered.useds[l]);
             $trow.hover(displayUsed, unDisplayUsed);
             
-            $wordcell = $('<td>');
-            $link = $("<a href='#' class='result-word'></a>");
-            var word = buildColoredWord(ordered.useds[l]);
-            $link.append(word);
-            $link.append(" ");
-            $link.data("used", ordered.useds[l]);
-            $wordcell.append($link);
-            $trow.append($wordcell);
-            
-            $scorecell = $('<td>');
-            var score = $("<span>").addClass('result-score').text(ordered.scores[l]);
-            $scorecell.append(score);
-            $trow.append($scorecell);
+            // The word
+            $trow.append($('<td>').append($("<a href='#' class='result-word'>" + buildColoredWord(ordered.useds[l]).html() + "</a>").data("used", ordered.useds[l])));
+            // The score
+            $trow.append('<td><span class="result-score">' + ordered.scores[l] + '</span>')
             
             $ccell = $('<td class="result-controls-row">');
             $highlight = $("<button class='btn btn-xs btn-primary'>Highlight <i class='glyphicon glyphicon-pencil'></i></button>").addClass('btn').addClass('word-btn').addClass('delete-btn');
@@ -686,7 +636,7 @@ $(function(){
             word  = word + letter;
             bonus = bonus + bookworm.specialMultipliers[special];
         });
-        score = ((bookworm.levelMultipliers[options.level] + wordvalue) * (bonus + word.length)) * 10;
+        score = ((options.level + wordvalue) * (bonus + word.length)) * 10;
         return score;
     }
     
@@ -715,7 +665,6 @@ $(function(){
                 finalResults = recursiveAddAllNext( [{row:row,col:col}], {row:row,col:col}, letter, finalResults, 0 );
             }
         }
-        console.log(options.checked);
         return finalResults;
     }
     
@@ -725,7 +674,6 @@ $(function(){
     //      word: "the word"
     // }
     function recursiveAddAllNext(used, coords, word, results){
-        options.checked++;
         if(isWord(word) && word.length >= minWordLength){
             results.push({used: used.slice(), word: word}); 
         }
@@ -858,6 +806,7 @@ $(function(){
     }
     
     function STimer() {
+        this.name = this.defaultName = "Timer Results";
         this.startTime;
         this.checks = [];
         this.ccounter = 0;
@@ -871,7 +820,8 @@ $(function(){
             titleBackground: "#333"
         };
         
-        this.start = function(){
+        this.start = function( name ){
+            this.name = name || this.defaultName;
             this.startTime = new Date().getTime();
             this.checks = [];
             return this;
@@ -930,7 +880,6 @@ $(function(){
             var line = "";
             var longestName = "Averages";
             var longestResult = "0";
-            var titleColor = "red";
             
             // Find the longest name (leftmost column)
             for(var i = 0; i < this.checks.length; i++){
@@ -939,10 +888,13 @@ $(function(){
             $.each(this.averages, function(name, values){
                 if(name.length > longestName.length) longestName = name;
             });
+            var longests = [longestName, "a".repeat(15), "a".repeat(15), "a".repeat(15)];
+            
+            // the title of the timings...
+            console.log("%c~~~~~~+  " + this.name + "  +~~~~~~", "color:" + this.cd.titleColor + ";font-size: 2em; font-weight:900;background: " + this.cd.titleBackground + ";");
             
             // Row Headers
             var vals = ["Name", "Time Elapsed", "Time Taken", "% of Total"];
-            var longests = [longestName, "a".repeat(15), "a".repeat(15), "a".repeat(15)];
             var line = this.displayConsoleRow(vals, longests, true, true);
             str = str + line;
             
@@ -1116,7 +1068,36 @@ $(function(){
             $table.append($tbody);
             return $table;
         }
-    }   
+    }
+    
+    var loading = {
+        event: null,
+        number: 0,
+        texts: [
+            "Dispatching Gremlins",
+            "Applying Magic Powder",
+            "Buttering Unicorns",
+            "Marinating API Result",
+            "BBQing BiBTeX",
+            "Roasting Gnome Hats"
+        ],
+        start: function(){
+            this.stop();
+            $loadingbox = $('<div class="loadingbox">').append($('<p id="loadingText"></p>')).append($('<img class="loading-gif-fancy" src="img/loading-fancy.gif" alt="loading..."/>'));
+            $('#result').html('').append($loadingbox);
+            var that = this;
+            $('#result #loadingText').text(this.texts[0] + "...");
+            this.event = setInterval(function(){
+                $('#result #loadingText').text(that.randomText() + "...");
+            },750);
+        },
+        stop: function(){
+            clearInterval(this.event);
+        },
+        randomText: function(){
+            return this.texts[Math.floor(Math.random()*this.texts.length)];
+        }
+    };
 });
 
 
