@@ -84,7 +84,9 @@ $(function(){
             x: 1,
             y: 2,
             z: 3
-        }
+        },
+        maxWordLength: 10,
+        minWordLength: 3
     };
     
     /**
@@ -113,88 +115,112 @@ $(function(){
         isOn: false
     };
     
+    // The game board!
     var $board = $('<div>').attr('id','game-board');
     
-    var $inputs = [];
-    
-    var minWordLength = 3;
-    var maxWordLength = 10;
-    
+    // whether permanent highlights are on
     var permaHighlight = false;
     var permaHighlighted = false;
-     
-    // Do a jQuery Ajax request for the text dictionary
-    $.getJSON( "words.json", function( words ) {
-        var ttimer = new STimer();
-        ttimer.start("Processing Dictionary");
-        ttimer.check("Starting...");
-        // And add them as properties to the dictionary lookup
-        // This will allow for fast lookups later
-        for ( var i = 0; i < words.length; i++ ) {
-            ttimer.addAverageStart("Processing word")
-            options.dict[ words[i] ] = true;
-            for(var j = 0; j < words[i].length; j++){
-                options.mapped[words[i].substr(0,(words[i].length - j))] = true;
-            }
-            ttimer.addAverageStop("Processing word")
-        }
-        ttimer.stop();
-        ttimer.consoleResults();
-        // The game would start after the dictionary was loaded
-        startGame();
-    });
     
-    $('#controls').submit(function(){
-        return false;
-    });
+    /*********************************************************************\
+    |              ~~~ MAKE THE BOARD, SET THINGS UP! ~~~                 |
+    \*********************************************************************/
     
+    startGame();
+    
+    /*********************************************************************\
+    |                      ~~~ EVENT HANDLING ~~~                         |
+    \*********************************************************************/
+    
+    // Stops control form from submitting.
+    $('#controls').submit(function(){ return false;});
+    
+    // Starts analysing OR warns user board isn't full.
     $('#go').click(function(e){
+        // Check if the game board is full
         if(checkGameBoardIsFull()){
-            // 
+            // If the board is full, let's do this! Reset results...
             $('#result').html('');
-            $('#result-title').text('Result (working...)');
-            loading.start();
-            options.timer.start();
-            options.level = $('#level').val() || 1;
-            saveState();
-            setTimeout(findWords, 10);
+            $('#result-title').html('Result <span class="small">(working...)</span>');
+           
+            loading.start();            // starts the loading display
+            options.timer.start();      // starts the timer
+            options.level = $('#level').val() || 1;     // sets the level
+            saveState();                // saves current state of board to URL using jquery bbq
+            setTimeout(findWords, 10);  // asynchronously run the find words routine
         } else {
+            // If the board isn't full, warn user and highlight empties
             $('#result').html($('<p>Please complete the gameboard.</p>'));
             $('#result-title').text('Result');
             $('.game-cell-input').each(function(){
                 if($(this).val() == ''){
                     $(this).addClass('unfilled');
                     var that = $(this);
-                    setTimeout(function(){
-                        that.removeClass('unfilled');
-                    }, 1000);
+                    setTimeout(function(){ that.removeClass('unfilled');}, 1000);
                 }
             });
         }
     });
     
+    // Clear the game board
     $('#clear').click(function(e){
-        $.each($inputs, function(key, $input){
-            $input.val('');
-            resetInput($input);
+        $('.game-cell-input').each(function(){
+            $(this).val('');
+            resetInput($(this));
         });
         saveState();
     });
     
+    // Save and load buttons (shouldn't *really* be needed...)
     $('#saveState').click(saveState);
     $('#loadState').click(loadState);
     
+    // When the hash changes, load state!
     $(window).bind( 'hashchange', function(e) {
         loadState();
     });
     
+    /**
+     * Time to start the game! Get dictionary, get board variant,
+     * make the actual board and load any saved data from the URL!
+     */
     function startGame(){
+        getDictionary();
         var state = $.deparam.fragment();
         options.variant = state.variant || options.variant;
         makeGameBoard();
-        loadState(); 
+        loadState();
+    }
+    
+    /**
+     * Get the word list from words.json file.
+     *
+     * NOTE: this function is timed and timing data appears in the console.
+     */
+    function getDictionary(){
+        // Do a jQuery Ajax request for the text dictionary
+        var ttimer = new STimer();
+        ttimer.start("Processing Dictionary");
+        ttimer.check('Get JSON')
+        $.getJSON( "words.json", function( words ) {
+            ttimer.check('Process words');
+            // And add them as properties to the dictionary and mapping lookups
+            // This will allow for fast lookups later
+            for ( var i = 0; i < words.length; i++ ) {
+                options.dict[ words[i] ] = true;
+                for(var j = 0; j < words[i].length; j++){
+                    options.mapped[words[i].substr(0,(words[i].length - j))] = true;
+                }
+            }
+            ttimer.stop();
+            ttimer.consoleResults();
+            // The game would start after the dictionary was loaded
+        });
     }
 
+    /**
+     * Saves the state of the board to the URL
+     */
     function saveState(){
         var grid = gridState();
         var state = {grid:grid};
@@ -203,6 +229,9 @@ $(function(){
         $.bbq.pushState(state);
     }
     
+    /**
+     * Loads the state of the board from the URL
+     */
     function loadState(){
         var state   = $.deparam.fragment();
         grid        = state.grid;
@@ -218,22 +247,24 @@ $(function(){
         }
         
         $theInputs  = $('.game-cell-input');
-        $theInputs.each(function(){ // iterate over each input
+        $theInputs.each(function(){ // iterate over each input, putting saved value in.
             var num = $(this).data('num');
             if(typeof grid !== "undefined" && typeof grid[num] !== "undefined" && grid[num] !== ""){
                 $(this).val( grid[num].val );
                 $(this).data('special', grid[num].special );
-                decorateInput($(this));
             } else {
                 $(this).val('');
                 $(this).data('special', 0 );
-                decorateInput($(this));
             }
+            decorateInput($(this));
         });
         
         $('#level').val(options.level);
     }
 
+    /**
+     * A grid state useable for saving/loading states.
+     */
     function gridState(){
         var grid = {};
         $theInputs = $('.game-cell-input');
@@ -282,7 +313,6 @@ $(function(){
                 $cell = $('<div class="game-cell" data-num=' + cellno + ' data-col=' + i + ' data-row=' + j + '>').append($inputCont);
                 $cell.hover(inputMouseEnter,inputMouseLeave);
                 
-                $inputs.push($input);
                 $colArray.push($input);
                 
                 $col.append($cell);
@@ -327,7 +357,8 @@ $(function(){
         $(this).change();
         if(e.keyCode == 13) // Return Key
         {
-            $inputs[($(this).data('num'))].focus();
+            var newNum = parseInt($(this).data('num')) + 1;
+            $('.game-cell-input[data-num="' + newNum + '"]').first().focus();
         }
     }
     
@@ -408,8 +439,8 @@ $(function(){
     {
         var isFull = true;
         
-        $.each($inputs, function(index, $el){
-            isFull = !!($el.val()) && isFull;
+        $('.game-cell-input').each(function(){
+            isFull = !!($(this).val()) && isFull;
         });
         
         return isFull;
@@ -636,7 +667,8 @@ $(function(){
             word  = word + letter;
             bonus = bonus + bookworm.specialMultipliers[special];
         });
-        score = ((options.level + wordvalue) * (bonus + word.length)) * 10;
+        score = ((parseInt(options.level) + wordvalue) * (parseInt(bonus) + word.length)) * 10;
+        console.log(word + " ( (lv) " + options.level + " + (wv) " + wordvalue + " ) * ( (bn) " + bonus + " + (wl) " + word.length + " ) *10 = " + score );
         return score;
     }
     
@@ -674,13 +706,13 @@ $(function(){
     //      word: "the word"
     // }
     function recursiveAddAllNext(used, coords, word, results){
-        if(isWord(word) && word.length >= minWordLength){
+        if(isWord(word) && word.length >= bookworm.minWordLength){
             results.push({used: used.slice(), word: word}); 
         }
         options.timer.addAverageStart("Find Next Inputs");
         var nextInputs = findNextInputs( used, coords );
         options.timer.addAverageStop("Find Next Inputs");
-        if(nextInputs.length != 0 && word.length < maxWordLength) {
+        if(nextInputs.length != 0 && word.length < bookworm.maxWordLength) {
             for(var ni = 0; ni < nextInputs.length; ni++){
                 var tempUsed = used.slice(); //copy used array
                 tempUsed.push(nextInputs[ni]); // add current coords to tempUsed array
