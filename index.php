@@ -76,7 +76,7 @@
             </div>
         </div>
         <script type="text/javascript" src="js/jquery-2.1.0.min.js"></script>
-        <script type="text/javascript" src="../js/jquery.ba-bbq.min.js"></script>
+        <script type="text/javascript" src="js/jquery.ba-bbq.min.js"></script>
         <script type="text/javascript" src="bootstrap/js/bootstrap.min.js"></script>
         <script type="text/javascript" src="js/main.js"></script>
     </body>

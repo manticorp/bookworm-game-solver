@@ -135,6 +135,7 @@ $(function(){
         variant: "web",
         dict: {},
         words: [],
+        mapped: {},
         firstFirstLetters: {},
         lastFirstLetters: {},
         isOn: false,
@@ -165,8 +166,14 @@ $(function(){
             if(!options.firstFirstLetters.hasOwnProperty(options.words[i][0])){
                 options.firstFirstLetters[options.words[i][0]] = i;
             }
+            
+            var chars = options.words[i].split('');
+            var word = "";
+            for(var w = 0; w < chars.length; w++){
+                word = word + chars[w];
+                if(!options.mapped.hasOwnProperty(word)) options.mapped[word] = true;
+            }
         }
-        
         // The game would start after the dictionary was loaded
         startGame();
     });
@@ -181,6 +188,7 @@ $(function(){
             $('#result').html('');
             $('#result-title').text('Result (working...)');
             loading.start();
+            options.checked = 0;
             options.timer.start();
             options.level = $('#level').val() || 1;
             saveState();
@@ -802,6 +810,7 @@ $(function(){
     }
     
     function couldLeadToWords( str ){
+        return !!options.mapped[str.toLowerCase()];
         if(str == "") return false;
         var s = str.toLowerCase();
         var slen = s.length;

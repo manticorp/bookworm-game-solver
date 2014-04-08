@@ -2,6 +2,9 @@
     var firstFirstLetters = {};
     var lastFirstLetters = {};
     var words = [];
+    var mapped = {};
+    var chars;
+    var word = "";
 
     var shortNearA = "ate";
     var longNearA  = "atheistically";
@@ -21,8 +24,20 @@
                  firstFirstLetters[words[q][0]]= q;
             }
             lastFirstLetters[words[q][0]] = q;
+            
+            chars = words[q].split('');
+            word = "";
+            for(var w = 0; w < chars.length; w++){
+                word = word + chars[w];
+                if(!mapped.hasOwnProperty(word)) mapped[word] = true;
+            }
         }
-        
+        console.log(fromMapped("hello"));
+        console.log(loopOverEveryElement("hello"));
+        console.log(loopOverSegment("hello"));
+        console.log(fromMapped("sfladjfklajd"));
+        console.log(loopOverEveryElement("sfladjfklajd"));
+        console.log(loopOverSegment("sfladjfklajd"));
         // Start testing...!
     });
     $('#go').click(function(){
@@ -56,6 +71,18 @@
         suite.add('Segment, Short near Z', function(){
             loopOverSegment( shortNearZ );
         });
+        suite.add('Mapped, Long near A', function(){
+            fromMapped( longNearA );
+        });
+        suite.add('Mapped, Long near Z', function(){
+            fromMapped( longNearZ );
+        });
+        suite.add('Mapped, Short near A', function(){
+            fromMapped( shortNearA );
+        });
+        suite.add('Mapped, Short near Z', function(){
+            fromMapped( shortNearZ );
+        });
         suite.on('complete',function(e){
             // $('#results').html("<tr><td>" + this.join("</td></tr><tr><td>") + "</td></tr>");
             $('#results').html('<thead><tr><th>Name</th><th>Ops/sec</th><th>Deviation</th><th>Samples</th></tr></thead>');
@@ -64,7 +91,6 @@
                 return (a.mean + a.moe > b.mean + b.moe ? 1 : -1);
             });
             sorted.forEach(function(a, b, c){
-                console.log(a);
                 $row = $('<tr>');
                 $row.append('<td>'+ a.name +'</td>');
                 $row.append('<td>'+ a.hz.toFixed(0) +'</td>');
@@ -82,6 +108,10 @@
             if(words[i].substr(0,string.length) === string) return true;
         }
         return false;
+    }
+    
+    function fromMapped( string ){
+        return !!mapped[string];
     }
 
     function loopOverSegment( string ){
