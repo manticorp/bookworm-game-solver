@@ -279,6 +279,7 @@ $(function(){
     
     function displayTime(){
         $('#time-taken').html('').append(options.timer.getDisplay());
+        $('#result-title').html('Result <span class="small">(' + (options.timer.getElapsedTime()/1000) + 's)</span>');
     }
     
     function makeGameBoard()
@@ -369,7 +370,7 @@ $(function(){
     function inputMouseEnter(e){
         var row = parseInt($(this).data('row'));
         var col = parseInt($(this).data('col'));
-        var neighbours = findNeighbours( buildGrid(),{row:row, col:col} );
+        var neighbours = findNeighbours({row:row, col:col} );
         $.each(neighbours, function(index, coords){
             $input = getInputFromCoords(coords);
             $input.addClass('highlight');
@@ -379,7 +380,7 @@ $(function(){
     function inputMouseLeave(e){
         var row = parseInt($(this).data('row'));
         var col = parseInt($(this).data('col'));
-        var neighbours = findNeighbours( buildGrid(),{row:row, col:col} );
+        var neighbours = findNeighbours({row:row, col:col} );
         $.each(neighbours, function(index, coords){
             $input = getInputFromCoords(coords);
             $input.removeClass('highlight');
@@ -443,20 +444,17 @@ $(function(){
     function displayResults(results){
         $result = $('#result');
         $result.html('');
-        $('#result-title').text('Result (' + options.timer.getElapsedTime()/1000 + 's)');
-        
+        options.timer.addCheck("Order Results By Score");
         var ordered = orderResultsByScore(results);
-            
+        
+        options.timer.addCheck("Build Table");
         $table = $("<table>")
             .attr('id', 'results-table')
             .addClass('table')
             .addClass('table-bordered')
             .addClass('table-condensed')
             .addClass('table-striped');
-        $thead = $("<thead>");
-        $theadrow = $("<tr>");
-        $theadrow.append($('<th>Word</th>')).append($('<th>Score</th>')).append($('<th>Controls</th>'))
-        $thead.append($theadrow);
+        $thead = $("<thead>").append($("<tr>").append($('<th>Word</th>')).append($('<th>Score</th>')).append($('<th>Controls</th>')));
         $table.append($thead);
         
         $tbody = $('<tbody>');
@@ -494,6 +492,7 @@ $(function(){
             $tbody.append($trow);
         }
         $table.append($tbody);
+        options.timer.addCheck("Append Table to Result");
         $result.append($table);
     }
     
@@ -686,26 +685,24 @@ $(function(){
         if(options.isOn == false){
             options.isOn = true;
             result = traverseGrid();
-            options.timer.stop()
-            displayTime();
             options.isOn = false;
             loading.stop();
             displayResults(result);
+            options.timer.stop()
+            displayTime();
         }
     }
     
     function traverseGrid(){
         options.grid = buildGrid();
         var finalResults = [];
-        $.each(options.grid, function(col, rows){
-            $.each(rows, function(row, val){
-                // start new word on each cell
-                row = parseInt(row);
-                col = parseInt(col);
+        for(col = 0; col < bookworm.variants[options.variant].length; col ++){
+            for(row = 0; row < bookworm.variants[options.variant][col]; row ++){
                 // options.timer.check(options.grid[col][row]);
-                finalResults = recursiveAddAllNext( [{row:row,col:col}], {row:row,col:col}, options.grid[col][row], finalResults, 0 );
-            });
-        });
+                var letter = options.grid[col][row];
+                finalResults = recursiveAddAllNext( [{row:row,col:col}], {row:row,col:col}, letter, finalResults, 0 );
+            }
+        }
         return finalResults;
     }
     
@@ -739,7 +736,7 @@ $(function(){
     }
     
     function findNeighbours( coords ){
-        var grid = options.grid;
+        var grid = (typeof options.grid === "undefined") ? buildGrid() : options.grid;
         var col = coords.col;
         var row = coords.row;
         var result = [];
@@ -932,7 +929,7 @@ $(function(){
             }
             $tbody.append($row);
             if(this.checks.length > 0){
-                var $row = $('<tr>').append($('<td colspan="3">Checks</td>'));
+                var $row = $('<tr>').append($('<th colspan="3">Checks</th>'));
                 $tbody.append($row);
                 for(i = 0; i < this.checks.length; i++){
                     var $row = $('<tr>');
