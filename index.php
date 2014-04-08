@@ -6,8 +6,8 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         
         <title>Bookworm Solver</title>
-        <link href='http://fonts.googleapis.com/css?family=Droid+Sans:400,700' rel='stylesheet' type='text/css'>
-        <link href='//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css' rel='stylesheet' type='text/css'>
+        <!--<link href='http://fonts.googleapis.com/css?family=Droid+Sans:400,700' rel='stylesheet' type='text/css'>-->
+        <link href='bootstrap/css/bootstrap.min.css' rel='stylesheet' type='text/css'>
         <link href='css/style.css' rel='stylesheet' type='text/css'>
         
         <link rel="apple-touch-icon" sizes="57x57" href="apple-touch-icon-57x57.png">
@@ -75,9 +75,9 @@
                 </div>
             </div>
         </div>
-        <script type="text/javascript" src="http://code.jquery.com/jquery-2.1.0.min.js"></script>
-        <script type="text/javascript" src="js/jquery.ba-bbq.min.js"></script>
-        <script type="text/javascript" src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="js/jquery-2.1.0.min.js"></script>
+        <script type="text/javascript" src="../js/jquery.ba-bbq.min.js"></script>
+        <script type="text/javascript" src="bootstrap/js/bootstrap.min.js"></script>
         <script type="text/javascript" src="js/main.js"></script>
     </body>
 </html>

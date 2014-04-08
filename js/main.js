@@ -684,9 +684,11 @@ $(function(){
     function findWords(){
         if(options.isOn == false){
             options.isOn = true;
+            options.timer.check("Traverse Grid");
             result = traverseGrid();
             options.isOn = false;
             loading.stop();
+            options.timer.check("Display Results");
             displayResults(result);
             options.timer.stop()
             displayTime();
@@ -703,6 +705,7 @@ $(function(){
                 finalResults = recursiveAddAllNext( [{row:row,col:col}], {row:row,col:col}, letter, finalResults, 0 );
             }
         }
+        console.log(options.checked);
         return finalResults;
     }
     
@@ -712,6 +715,7 @@ $(function(){
     //      word: "the word"
     // }
     function recursiveAddAllNext(used, coords, word, results){
+        options.checked++;
         if(isWord(word) && word.length >= minWordLength){
             results.push({used: used.slice(), word: word}); 
         }
@@ -899,6 +903,9 @@ $(function(){
                 this.averages[name] = {starts: [], stops: [], count: 0};
             }
             this.averages[name].starts.push(new Date().getTime());
+            if((this.averages[name].starts.length - this.averages[name].stops.length) == 2){
+                this.averages[name].stops.push(new Date().getTime());
+            }
         }
         
         this.averageStop = this.addAverageStop = function(name){
@@ -914,49 +921,40 @@ $(function(){
         }
         
         this.getDisplay = function(){
-            var $table = $('<table>');
-            var $row = $('<tr>').append($('<th>Name</th>')).append($('<th>Time Elapsed</th>'));
-            if(this.checks.length > 0){
-                $row.append($('<th>Time Taken</th>'));
-            }
-            var $head = $('<thead>').append($row);
-            $table.append($head);
+            var $table = $('<table class="table">');
+            $table.append('<thead><tr><th>Name</th><th>Time Elapsed</th><th>Time Taken</th><th>% of total</th></tr></thead>');
             $tbody = $('<tbody>');
             var $row = $('<tr>');
             $row.append($('<td>Start</td>')).append($('<td>0s</td>'));
             if(this.checks.length > 0){
                 $row.append($('<td>' + ((this.checks[0].time - this.startTime)/1000) + 's</td>'));
+                $row.append($('<td>' + (((this.checks[0].time - this.startTime)/(this.endTime-this.startTime))*100).toFixed(2) + '%</td>'));
             }
             $tbody.append($row);
             if(this.checks.length > 0){
-                var $row = $('<tr>').append($('<th colspan="3">Checks</th>'));
+                var $row = $('<tr>').append($('<th colspan="4">Checks</th>'));
                 $tbody.append($row);
                 for(i = 0; i < this.checks.length; i++){
                     var $row = $('<tr>');
-                    $row.append(
-                        $('<td>' + this.checks[i].name + '</td>')
-                    ).append(
-                        $('<td>' + ((this.checks[i].time - this.startTime)/1000) + 's</td>')
-                    );
+                    $row.append('<td>' + this.checks[i].name + '</td><td>' + ((this.checks[i].time - this.startTime)/1000) + 's</td>');
                     if(i == (this.checks.length-1)){
-                        $row.append($('<td>' + ((this.endTime - this.checks[i].time)/1000) + 's</td>'));
+                        var timeTaken = (this.endTime - this.checks[i].time);
                     } else {
-                        $row.append($('<td>' + ((this.checks[i+1].time - this.checks[i].time)/1000) + 's</td>'));
+                        var timeTaken = (this.checks[i+1].time - this.checks[i].time);
                     }
+                    $row.append('<td>' + (timeTaken/1000) + 's</td>');
+                    $row.append('<td>' + ((timeTaken/(this.endTime - this.startTime))*100).toFixed(2) + '%</td>');
                     $tbody.append($row);
                 }
             }
             var $row = $('<tr>');
             $row.append($('<td>Stop</td>')).append($('<td>' + (this.endTime - this.startTime)/1000 + 's</td>'));
             if(this.checks.length > 0){
-                $row.append($('<td>Done</td>'));
+                $row.append($('<td colspan="2">Done</td>'));
             }
+            $tbody.append($row);
             if(numProps(this.averages) > 0){
-                if(this.checks.length > 0){
-                    $tbody.append($('<tr>').append($('<th colspan="3">Averages</th>')));
-                } else {
-                    $tbody.append($('<tr>').append($('<th colspan="2">Averages</th>')));
-                }
+                $tbody.append($('<tr>').append($('<th>Averages</th><th>Avg</th><th>Iters</th><th>% of total</th>')));
                 var that = this;
                 $.each(this.averages, function(name, values){
                     var $row = $('<tr>');
@@ -970,15 +968,12 @@ $(function(){
                     $row.append(
                         $('<td>' + name + '</td>')
                     );
-                    if(that.checks.length > 0){
-                        $row.append($('<td colspan="2">' + (average/1000).toPrecision(3) + 's</td>'));
-                    } else {
-                        $row.append($('<td>' + (average/1000).toPrecision(3) + 's</td>'));
-                    }
+                    $row.append($('<td>' + (average/1000).toPrecision(3) + 's</td>'));
+                    $row.append($('<td>' + values.starts.length + '</td>'));
+                    $row.append($('<td>' + (((average*values.starts.length)/(that.endTime - that.startTime))*100).toFixed(2) + '%</td>'));
                     $tbody.append($row);
                 });
             }
-            $tbody.append($row);
             $table.append($tbody);
             return $table;
         }
