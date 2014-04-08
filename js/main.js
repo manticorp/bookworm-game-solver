@@ -286,7 +286,8 @@ $(function(){
     }
     
     function displayTime(){
-        $('#time-taken').html('').append(options.timer.getDisplay());
+        options.timer.consoleResults();
+        // $('#time-taken').html('').append(options.timer.getDisplay());
         $('#result-title').html('Result <span class="small">(' + (options.timer.getElapsedTime()/1000) + 's)</span>');
     }
     
@@ -543,6 +544,7 @@ $(function(){
                     if($ninput !== false && typeof $ninput != "undefined"){
                         $input.val($ninput.val());
                         $input.data('special',$ninput.data('special'));
+                        $ninput.val('');
                         resetInput($ninput);
                         decorateInput($input);
                     } else {
@@ -811,18 +813,6 @@ $(function(){
     
     function couldLeadToWords( str ){
         return !!options.mapped[str.toLowerCase()];
-        if(str == "") return false;
-        var s = str.toLowerCase();
-        var slen = s.length;
-        var w = options.words;
-        var start = options.lastFirstLetters[s[0]];
-        var end = options.firstFirstLetters[s[0]];
-        do {
-            if(w[start].substr(0,slen) == s){
-                return true;
-            }
-        } while( ((start--) !== end) )
-        return false;
     }
     
     function leadsToWords( str ){
@@ -874,6 +864,12 @@ $(function(){
         this.averages = {};
         this.acounter = 0;
         this.endTime;
+        this.cd = {
+            hpadding: 1,
+            vpadding: 0,
+            titleColor: "#faa",
+            titleBackground: "#333"
+        };
         
         this.start = function(){
             this.startTime = new Date().getTime();
@@ -929,7 +925,141 @@ $(function(){
             return this.endTime - this.startTime;
         }
         
+        this.consoleResults = function(){
+            var str = "";
+            var line = "";
+            var longestName = "Averages";
+            var longestResult = "0";
+            var titleColor = "red";
+            
+            // Find the longest name (leftmost column)
+            for(var i = 0; i < this.checks.length; i++){
+                if(this.checks[i].name.length > longestName.length) longestName = this.checks[i].name;
+            }
+            $.each(this.averages, function(name, values){
+                if(name.length > longestName.length) longestName = name;
+            });
+            
+            // Row Headers
+            var vals = ["Name", "Time Elapsed", "Time Taken", "% of Total"];
+            var longests = [longestName, "a".repeat(15), "a".repeat(15), "a".repeat(15)];
+            var line = this.displayConsoleRow(vals, longests, true, true);
+            str = str + line;
+            
+            // Start
+            if(this.checks.length > 0){
+                var vals = ["Start", "0s", ((this.checks[0].time - this.startTime)/1000) + 's', (((this.checks[0].time - this.startTime)/(this.endTime-this.startTime))*100).toFixed(2) + "%"];
+            } else {
+                var vals = ["Start", "0s", ((this.endTime - this.startTime)/1000) + 's', (((this.endTime - this.startTime)/(this.endTime-this.startTime))*100).toFixed(2) + "%"];
+            }
+            var line = this.displayConsoleRow(vals, longests, false, false);
+            str = str + line;
+            
+            // Checks
+            for(var j = 0; j < this.checks.length; j++){
+                vals = [this.checks[j].name, (String(((this.checks[j].time - this.startTime)/1000).toPrecision(2))+"s")];
+                if(j == (this.checks.length-1)){
+                    var timeTaken = (this.endTime - this.checks[j].time);
+                } else {
+                    var timeTaken = (this.checks[j+1].time - this.checks[j].time);
+                }
+                vals.push((timeTaken/1000).toPrecision(2) + "s");
+                vals.push(((timeTaken/(this.endTime - this.startTime))*100).toFixed(2) + '%');
+                var line = this.displayConsoleRow(vals, longests, false, false);
+                str = str + line;
+            }
+            
+            // Done
+            var vals = ["Stop", ((this.endTime - this.startTime)/1000) + 's', "Done", ""];
+            var line = this.displayConsoleRow(vals, longests, false, false);
+            str = str + line;
+            
+            // Averages
+            str = str + this.consoleRow(["","","",""], longests);
+            if(numProps(this.averages) > 0){
+                var vals = ["Averages", "Avg", "Iters", "% of total"];
+                var line = this.displayConsoleRow(vals, longests, true, true);
+                str = str + line;
+                var that = this;
+                $.each(this.averages, function(name, values){
+                    var vals = [];
+                    var average = 0;
+                    for(i = 0; i < values.starts.length; i++){
+                        average = average + (values.stops[i] - values.starts[i]);
+                    }
+                    average = average/(values.starts.length);
+                    vals = [
+                        name, 
+                        String((average/1000).toPrecision(3)) + 's', 
+                        String(values.starts.length), 
+                        String((((average * values.starts.length)/(that.endTime - that.startTime))*100).toFixed(2)) + '%'
+                    ];
+                    var line = that.displayConsoleRow(vals, longests, false, false);
+                    str = str + line;
+                });
+            }
+            // bottom border
+            var line = this.consoleRow(vals, longests, false, false);
+            // console.log("-".repeat(line.length));
+            str = str + "-".repeat(line.length);
+            // console.log(str);
+            return str;
+        }
+        
+        this.displayConsoleRow = function(vals, longests, center, title){
+            center = !!center;
+            title = !!title;
+            
+            var str = "|";
+            for(var i = 0; i < vals.length; i++){
+                if(center){
+                    if((longests[i].length - vals[i].length) % 2 == 0){
+                        lpad = rpad = (longests[i].length - vals[i].length)/2;
+                    } else {
+                        lpad = ((longests[i].length - vals[i].length)-1)/2;
+                        rpad = ((longests[i].length - vals[i].length)+1)/2;
+                    }
+                    str = str + " ".repeat(this.cd.hpadding) + " ".repeat(lpad) + vals[i] + " ".repeat(rpad) + " ".repeat(this.cd.hpadding) + "|";
+                } else {
+                    str = str + " ".repeat(this.cd.hpadding) + vals[i] + " ".repeat(longests[i].length - vals[i].length) + " ".repeat(this.cd.hpadding) + "|";
+                }
+            }
+            console.log("-".repeat(str.length));
+            if(title){
+                this.colorTrace(str, this.cd.titleColor);
+            } else {
+                console.log(str);
+            }
+            str = "-".repeat(str.length) + "\n" + str + "\n";
+            return str;
+        }
+        
+        this.consoleRow = function(vals, longests, center){
+            center = !!center;
+            var str = "|";
+            for(var i = 0; i < vals.length; i++){
+                if(center){
+                    if((longests[i].length - vals[i].length) % 2 == 0){
+                        lpad = rpad = (longests[i].length - vals[i].length)/2;
+                    } else {
+                        lpad = ((longests[i].length - vals[i].length)-1)/2;
+                        rpad = ((longests[i].length - vals[i].length)+1)/2;
+                    }
+                    str = str + " ".repeat(this.cd.hpadding) + " ".repeat(lpad) + vals[i] + " ".repeat(rpad) + " ".repeat(this.cd.hpadding) + "|";
+                } else {
+                    str = str + " ".repeat(this.cd.hpadding) + vals[i] + " ".repeat(longests[i].length - vals[i].length) + " ".repeat(this.cd.hpadding) + "|";
+                }
+            }
+            str = "-".repeat(str.length) + "\n" + str + "\n";
+            return str;
+        }
+        
+        this.colorTrace = function(msg, color) {
+            console.log("%c" + msg, "color:" + color + ";font-weight:900;background: " + this.cd.titleBackground + ";");
+        }
+        
         this.getDisplay = function(){
+            this.consoleResults();
             var $table = $('<table class="table">');
             $table.append('<thead><tr><th>Name</th><th>Time Elapsed</th><th>Time Taken</th><th>% of total</th></tr></thead>');
             $tbody = $('<tbody>');
@@ -1046,4 +1176,9 @@ if(!Array.prototype.indexOf) {
         }
         return -1;
     };
+}
+
+String.prototype.repeat = function( num )
+{
+    return new Array( num + 1 ).join( this );
 }
