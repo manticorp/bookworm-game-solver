@@ -28,138 +28,143 @@ $(function(){
         }
     };
     
-    // The dictionary lookup object
-    var dict = {};
-    var words = [];
+    var bookworm = {
+        variants: {
+            web:    [7,8,7,8,7,8,7],
+            tiny:   [1,2,1],
+            small:  [2,3,2],
+            med:    [3,4,3,4,3]
+        },
+        levelMultipliers: {
+            1: 1,
+            2: 2,
+            3: 3, 
+            4: 4,
+            5: 5,
+            6: 6,
+            7: 7,
+            8: 8,
+            9: 9,
+            10: 10,
+            11: 11,
+            12: 12,
+            13: 13,
+            14: 14,
+            15: 15,
+            16: 16,
+            17: 17,
+            18: 18,
+            19: 19,
+            20: 20
+        },
+        specialMultipliers: {
+            1: 2,
+            2: 4,
+            3: 7,
+            4: 10,
+            5: 0,
+            6: 0,
+            7: 0,
+            8: 0,
+            9: 0,
+            0: 0
+        },
+        charScores: {
+            a: 1,
+            b: 4,
+            c: 4,
+            d: 3,
+            e: 1,
+            f: 5,
+            g: 3,
+            h: 5,
+            i: 1,
+            j: 8,
+            k: 7,
+            l: 2,
+            m: 4,
+            n: 2,
+            o: 1,
+            p: 4,
+            q: 7,
+            qu: 7,
+            r: 2,
+            s: 1,
+            t: 2,
+            u: 2,
+            v: 5,
+            w: 6,
+            x: 8,
+            y: 6,
+            z: 10
+        },
+        charDots: {
+            a: 1,
+            b: 2,
+            c: 2,
+            d: 1,
+            e: 1,
+            f: 2,
+            g: 1,
+            h: 1,
+            i: 1,
+            j: 3,
+            k: 2,
+            l: 1,
+            m: 2,
+            n: 1,
+            o: 1,
+            p: 2,
+            q: 2,
+            qu: 2,
+            r: 1,
+            s: 1,
+            t: 1,
+            u: 1,
+            v: 2,
+            w: 2,
+            x: 1,
+            y: 2,
+            z: 3
+        }
+    };
     
-    var variants = {
-        web:    [7,8,7,8,7,8,7],
-        tiny:   [1,2,1],
-        small:  [2,3,2],
-        med:    [3,4,3,4,3]
-    }
+    var options = {
+        timer: new STimer(),
+        level: 1,
+        variant: "web",
+        dict: {},
+        words: [],
+        firstFirstLetters: {},
+        lastFirstLetters: {},
+        isOn: false,
+        maxDepth: 0,
+        checked: 0
+    };
+    
     var $board = $('<div>').attr('id','game-board');
     
-    var $cols = [];
-    var $cells = [];
     var $inputs = [];
-    
-    var timer = new STimer();
     
     var minWordLength = 3;
     var maxWordLength = 10;
     
     var permaHighlight = false;
     var permaHighlighted = false;
-    var isOn = false;
-    var level = 1;
-    var boardType = "web";
-    
-    var levelMultipliers = {
-        1: 1,
-        2: 2,
-        3: 3, 
-        4: 4,
-        5: 5,
-        6: 6,
-        7: 7,
-        8: 8,
-        9: 9,
-        10: 10,
-        11: 11,
-        12: 12,
-        13: 13,
-        14: 14,
-        15: 15,
-        16: 16,
-        17: 17,
-        18: 18,
-        19: 19,
-        20: 20
-    };
-    
-    var specialMultipliers = {
-        1: 2,
-        2: 4,
-        3: 7,
-        4: 10,
-        5: 0,
-        6: 0,
-        7: 0,
-        8: 0,
-        9: 0,
-        0: 0
-    };
-    
-    var charScores = {
-        a: 1,
-        b: 4,
-        c: 4,
-        d: 3,
-        e: 1,
-        f: 5,
-        g: 3,
-        h: 5,
-        i: 1,
-        j: 8,
-        k: 7,
-        l: 2,
-        m: 4,
-        n: 2,
-        o: 1,
-        p: 4,
-        q: 7,
-        qu: 7,
-        r: 2,
-        s: 1,
-        t: 2,
-        u: 2,
-        v: 5,
-        w: 6,
-        x: 8,
-        y: 6,
-        z: 10
-    };
-    
-    var charDots = {
-        a: 1,
-        b: 2,
-        c: 2,
-        d: 1,
-        e: 1,
-        f: 2,
-        g: 1,
-        h: 1,
-        i: 1,
-        j: 3,
-        k: 2,
-        l: 1,
-        m: 2,
-        n: 1,
-        o: 1,
-        p: 2,
-        q: 2,
-        qu: 2,
-        r: 1,
-        s: 1,
-        t: 1,
-        u: 1,
-        v: 2,
-        w: 2,
-        x: 1,
-        y: 2,
-        z: 3
-    };
      
     // Do a jQuery Ajax request for the text dictionary
     $.get( "words.txt", function( txt ) {
         // Get an array of all the words
-        words = txt.split( "\n" );
+        options.words = txt.split( "\n" );
      
         // And add them as properties to the dictionary lookup
         // This will allow for fast lookups later
-        for ( var i = 0; i < words.length; i++ ) {
-            dict[ words[i] ] = true;
+        for ( var i = 0; i < options.words.length; i++ ) {
+            options.dict[ options.words[i] ] = true;
+            options.lastFirstLetters[options.words[i][0]] = i;
+            if(!options.firstFirstLetters.hasOwnProperty(options.words[i][0])){
+                options.firstFirstLetters[options.words[i][0]] = i;
+            }
         }
         
         // The game would start after the dictionary was loaded
@@ -172,13 +177,26 @@ $(function(){
     
     $('#go').click(function(e){
         if(checkGameBoardIsFull()){
+            // 
+            $('#result').html('');
+            $('#result-title').text('Result (working...)');
             loading.start();
-            timer.start();
-            level = $('#level').val() || 1;
+            options.timer.start();
+            options.level = $('#level').val() || 1;
             saveState();
-            findWords();
-            timer.stop()
-            displayTime();
+            setTimeout(findWords, 100);
+        } else {
+            $('#result').html($('<p>Please complete the gameboard.</p>'));
+            $('#result-title').text('Result');
+            $('.game-cell-input').each(function(){
+                if($(this).val() == ''){
+                    $(this).addClass('unfilled');
+                    var that = $(this);
+                    setTimeout(function(){
+                        that.removeClass('unfilled');
+                    }, 1000);
+                }
+            });
         }
     });
     
@@ -199,8 +217,8 @@ $(function(){
     
     function startGame(){
         var state = $.deparam.fragment();
-        variant = state.boardType || boardType;
-        makeGameBoard( variant );
+        options.variant = state.variant || options.variant;
+        makeGameBoard();
         loadState(); 
     }
 
@@ -208,7 +226,7 @@ $(function(){
         var grid = gridState();
         var state = {grid:grid};
         state.level = $('#level').val();
-        state.boardType = boardType;
+        state.variant = options.variant;
         $.bbq.pushState(state);
     }
     
@@ -216,14 +234,14 @@ $(function(){
         var state   = $.deparam.fragment();
         grid        = state.grid;
         
-        if(typeof state.boardType !== "undefined"){
-            boardType = state.boardType;
+        if(typeof state.variant !== "undefined"){
+            options.variant = state.variant;
         }
         
         if(typeof state.level !== "undefined"){
-            level = state.level;
+            options.level = state.level;
         } else {
-            level = 1;
+            options.level = 1;
         }
         
         $theInputs  = $('.game-cell-input');
@@ -240,7 +258,7 @@ $(function(){
             }
         });
         
-        $('#level').val(level);
+        $('#level').val(options.level);
     }
 
     function gridState(){
@@ -260,25 +278,25 @@ $(function(){
     }
     
     function displayTime(){
-        $('#time-taken').html('').append(timer.getDisplay());
+        $('#time-taken').html('').append(options.timer.getDisplay());
     }
     
-    function makeGameBoard( variant )
+    function makeGameBoard()
     {
-        if(typeof variant === "undefined") variant = "web";
+        if(typeof options.variant === "undefined") options.variant = "web";
         
         var $col;
         var $cell;
         var $input;
         var cellno = 1;
         
-        for( var i = 0; i < variants[variant].length; i++ )
+        for( var i = 0; i < bookworm.variants[options.variant].length; i++ )
         {
             var cellClass = (i%2 == 0) ? "odd" : "even";
             $col = $('<div class="game-col">').addClass(cellClass);
             $colArray = [];
             
-            for( var j = 0; j < variants[variant][i]; j++ )
+            for( var j = 0; j < bookworm.variants[options.variant][i]; j++ )
             {
                 $input = $('<input type="text" class="game-cell-input" data-num=' + cellno + ' data-col=' + i + ' data-row=' + j + '>');
                 $input.change(inputChange);
@@ -292,13 +310,10 @@ $(function(){
                 $inputs.push($input);
                 $colArray.push($input);
                 
-                
-                $cells.push($cell);
                 $col.append($cell);
                 
                 cellno++;
             }
-            $cols.push($colArray);
             $board.append($col);
         }
         $('#game-container').html('');
@@ -342,6 +357,8 @@ $(function(){
     }
     
     function getInputFromCoords(coords){
+        var query = '.game-cell-input[data-row="' + coords.row + '"][data-col="' + coords.col + '"]';
+        return $(query).first();
         return $cols[coords.col][coords.row];
     }
     
@@ -372,18 +389,16 @@ $(function(){
     function buildGrid(){
         var grid = {};
         var i = 0;
-        $.each($cols, function(key, $col){ // iterate over each input
-            j = 0;
-            grid[i] = {};
-            $.each($col, function(key, $input){
-                if($input.val() == "Q") {
-                    grid[i][j] = "QU";
-                } else {
-                    grid[i][j] = $input.val();
-                }
-                j++;
-            });
-            i++;
+        var inputs = $('.game-cell-input');
+        inputs.each(function(){
+            if(!grid.hasOwnProperty($(this).data('col'))){
+                grid[$(this).data('col')] = {};
+            }
+            if($(this).val() == "Q") {
+                grid[$(this).data('col')][$(this).data('row')] = "QU";
+            } else {
+                grid[$(this).data('col')][$(this).data('row')] = $(this).val();
+            }
         });
         return grid;
     }
@@ -407,7 +422,7 @@ $(function(){
         $input.data('special', num).val($input.val().slice(0,1));
         $input.parent().parent().addClass('special-'+num);
         
-        var score = charDots[$input.val().toLowerCase()];
+        var score = bookworm.charDots[$input.val().toLowerCase()];
         if(typeof score !== "undefined"){
             $input.parent().addClass('points-' + score);
         }
@@ -425,26 +440,10 @@ $(function(){
         return isFull;
     }
     
-    // finds all words available to gameboard
-    function findWords(){
-        if(isOn == false){
-            $result = $('#result');
-            $result.html('');
-            
-            isOn = true;
-            var words = {};
-            var grid = buildGrid();
-            words = traverseGrid( grid );
-            isOn = false;
-            
-            loading.stop();
-            displayResults(words);
-        }
-    }
-    
     function displayResults(results){
         $result = $('#result');
         $result.html('');
+        $('#result-title').text('Result (' + options.timer.getElapsedTime()/1000 + 's)');
         
         var ordered = orderResultsByScore(results);
             
@@ -526,8 +525,8 @@ $(function(){
             }
         }
         
-        if(typeof boardType === "undefined") boardType = "web";
-        var colSizes = variants[boardType];
+        if(typeof options.variant === "undefined") options.variant = "web";
+        var colSizes = bookworm.variants[options.variant];
         for(var l = 0; l < colsUsed.length; l++){
             col = colsUsed[l];
             for(var row = (colSizes[col]); row > 0; row--){
@@ -674,25 +673,37 @@ $(function(){
             special = $input.data('special');
             if(typeof special === "undefined") special = 0;
             
-            wordvalue = wordvalue + charScores[letter]; 
+            wordvalue = wordvalue + bookworm.charScores[letter]; 
             word  = word + letter;
-            bonus = bonus + specialMultipliers[special];
+            bonus = bonus + bookworm.specialMultipliers[special];
         });
-        score = ((levelMultipliers[level] + wordvalue) * (bonus + word.length)) * 10;
+        score = ((bookworm.levelMultipliers[options.level] + wordvalue) * (bonus + word.length)) * 10;
         return score;
     }
     
-    function traverseGrid( grid ){
-        finalResults = [];
-        $.each(grid, function(col, rows){
+    // finds all words available to gameboard
+    function findWords(){
+        if(options.isOn == false){
+            options.isOn = true;
+            result = traverseGrid();
+            options.timer.stop()
+            displayTime();
+            options.isOn = false;
+            loading.stop();
+            displayResults(result);
+        }
+    }
+    
+    function traverseGrid(){
+        options.grid = buildGrid();
+        var finalResults = [];
+        $.each(options.grid, function(col, rows){
             $.each(rows, function(row, val){
                 // start new word on each cell
                 row = parseInt(row);
                 col = parseInt(col);
-                
-                // timer.check(grid[col][row]);
-                
-                finalResults = recursiveAddAllNext(grid, [{row:row,col:col}], {row:row,col:col}, grid[col][row], finalResults);
+                // options.timer.check(options.grid[col][row]);
+                finalResults = recursiveAddAllNext( [{row:row,col:col}], {row:row,col:col}, options.grid[col][row], finalResults, 0 );
             });
         });
         return finalResults;
@@ -703,32 +714,39 @@ $(function(){
     //      used: [array of used cells],
     //      word: "the word"
     // }
-    function recursiveAddAllNext(grid, used, coords, word, results){
+    function recursiveAddAllNext(used, coords, word, results){
         if(isWord(word) && word.length >= minWordLength){
             results.push({used: used.slice(), word: word}); 
         }
-        var nextInputs = findNextInputs(grid, used, coords);
+        options.timer.addAverageStart("Find Next Inputs");
+        var nextInputs = findNextInputs( used, coords );
+        options.timer.addAverageStop("Find Next Inputs");
         if(nextInputs.length != 0 && word.length < maxWordLength) {
-            $.each(nextInputs, function(key, tempCoords){
+            for(var ni = 0; ni < nextInputs.length; ni++){
                 var tempUsed = used.slice(); //copy used array
-                tempUsed.push(tempCoords); // add current coords to tempUsed array
-                var tempWord = word + grid[tempCoords.col][tempCoords.row]; // create a temporary word
+                tempUsed.push(nextInputs[ni]); // add current coords to tempUsed array
+                var tempWord = word + nextInputs[ni].letter; // create a temporary word
                 
+                options.timer.addAverageStart("couldLeadToWords");
                 var cltw = couldLeadToWords(tempWord);
+                options.timer.addAverageStop("couldLeadToWords");
                 if(cltw){
-                    results = recursiveAddAllNext(grid, tempUsed, tempCoords, tempWord, results);
+                    results = recursiveAddAllNext( tempUsed, nextInputs[ni], tempWord, results );
                 }
-            });
+            }
         }
         return results;
     }
     
-    function findNeighbours( grid, coords ){
+    function findNeighbours( coords ){
+        var grid = options.grid;
+        var col = coords.col;
+        var row = coords.row;
         var result = [];
         for(var i = -1; i <= 1; i++){
-            tempcol = coords.col + i;
+            tempcol = col + i;
             if(typeof grid[tempcol] !== "undefined"){
-                if( tempcol == coords.col) {
+                if( tempcol == col) {
                     var start = -1;
                     var end = 1;
                 } else if(tempcol%2 == 0){
@@ -739,9 +757,9 @@ $(function(){
                     var end = 1;
                 }
                 for(j = start; j <= end; j++){
-                    temprow = coords.row + j;
+                    temprow = row + j;
                     if(typeof grid[tempcol][temprow] !== "undefined"){
-                        result.push({col:tempcol, row: temprow});
+                        result.push({col:tempcol, row: temprow, letter: grid[tempcol][temprow]});
                     }
                 }
             }
@@ -750,18 +768,24 @@ $(function(){
     }
     
     // returns list of next inputs possible from input
-    function findNextInputs( grid, used, coords ){
-        neighbours = findNeighbours(grid, coords);
+    function findNextInputs( used, coords ){
+        var neighbours = findNeighbours( coords );
         var result = [];
-        $.each(neighbours, function(tkey, tprop){
-            isUsed = (tprop.row == coords.row && tprop.col == coords.col);
-            $.each(used, function(mkey, mprop){
-                if(mprop.row == tprop.row && mprop.col == tprop.col){
-                    isUsed = true;
-                }
-            });
-            if(!isUsed) result.push(tprop);
-        });
+        var isUsed;
+        var x = neighbours.length-1;
+        do { 
+            isUsed = (neighbours[x].row == coords.row && neighbours[x].col == coords.col);
+            if(!isUsed){
+                var y = used.length-1;
+                do {
+                    if(used[y].row == neighbours[x].row && used[y].col == neighbours[x].col){
+                        isUsed = true;
+                        y = 0;
+                    }
+                } while( y-- );
+            }
+            if(!isUsed) result.push(neighbours[x]);
+        } while( x-- );
         return result;
     }
     
@@ -777,23 +801,25 @@ $(function(){
     }
     
     function couldLeadToWords( str ){
-        result = false;
-        if(str == "") return result;
-        str = str.toLowerCase();
-        for(i = 0; i < words.length; i++){
-            if(words[i].substr(0,str.length) == str){
-                result = true;
-                break;
+        if(str == "") return false;
+        var s = str.toLowerCase();
+        var slen = s.length;
+        var w = options.words;
+        var start = options.lastFirstLetters[s[0]];
+        var end = options.firstFirstLetters[s[0]];
+        do {
+            if(w[start].substr(0,slen) == s){
+                return true;
             }
-        }
-        return result;
+        } while( ((start--) !== end) )
+        return false;
     }
     
     function leadsToWords( str ){
         results = [];
         if(str == "") return results;
         str = str.toLowerCase();
-        $.each(dict, function(key, val){
+        $.each(options.dict, function(key, val){
             if(key.substr(0,str.length) == str){
                 results.push(key);
             }
@@ -802,7 +828,7 @@ $(function(){
     }
     
     function isWord(word){
-        return !!(dict[word.toLowerCase()]);
+        return !!(options.dict[word.toLowerCase()]);
     }
      
     // Takes in an array of letters and finds the longest
@@ -817,7 +843,7 @@ $(function(){
             word = curLetters.join("");
        
             // And see if it's in the dictionary
-            if ( dict[ word ] ) {
+            if ( options.dict[ word ] ) {
                 // If it is, return that word
                 return word;
             }
@@ -834,7 +860,9 @@ $(function(){
     function STimer() {
         this.startTime;
         this.checks = [];
-        this.counter = 0;
+        this.ccounter = 0;
+        this.averages = {};
+        this.acounter = 0;
         this.endTime;
         
         this.start = function(){
@@ -850,14 +878,41 @@ $(function(){
         
         this.addCheck = this.check = function(name){
             if(typeof name === "undefined"){
-                name = this.counter;
-                this.counter++;
+                name = this.ccounter;
+                this.ccounter++;
             }
             this.checks.push({time: new Date().getTime(), name: name});
             return this;
         }
         
-        this.getTime = function(){
+        this.addAverage = function(name){
+            if(typeof name === "undefined"){
+                name = this.acounter;
+                this.acounter++;
+            }
+            this.averages[name] = {starts: [], stops: [], count: 0};
+        }
+        
+        this.averageStart = this.addAverageStart = function(name){
+            if(!this.averages.hasOwnProperty(name)){
+                if(typeof name === "undefined"){
+                    name = this.acounter;
+                    this.acounter++;
+                }
+                this.averages[name] = {starts: [], stops: [], count: 0};
+            }
+            this.averages[name].starts.push(new Date().getTime());
+        }
+        
+        this.averageStop = this.addAverageStop = function(name){
+            if(this.averages.hasOwnProperty(name)){
+                this.averages[name].stops.push(new Date().getTime());
+            } else {
+                console.log("No average named: " + name);
+            }
+        }
+        
+        this.getTime = this.getElapsedTime = function(){
             return this.endTime - this.startTime;
         }
         
@@ -876,7 +931,9 @@ $(function(){
                 $row.append($('<td>' + ((this.checks[0].time - this.startTime)/1000) + 's</td>'));
             }
             $tbody.append($row);
-            if(numProps(this.checks) > 0){
+            if(this.checks.length > 0){
+                var $row = $('<tr>').append($('<td colspan="3">Checks</td>'));
+                $tbody.append($row);
                 for(i = 0; i < this.checks.length; i++){
                     var $row = $('<tr>');
                     $row.append(
@@ -896,6 +953,33 @@ $(function(){
             $row.append($('<td>Stop</td>')).append($('<td>' + (this.endTime - this.startTime)/1000 + 's</td>'));
             if(this.checks.length > 0){
                 $row.append($('<td>Done</td>'));
+            }
+            if(numProps(this.averages) > 0){
+                if(this.checks.length > 0){
+                    $tbody.append($('<tr>').append($('<th colspan="3">Averages</th>')));
+                } else {
+                    $tbody.append($('<tr>').append($('<th colspan="2">Averages</th>')));
+                }
+                var that = this;
+                $.each(this.averages, function(name, values){
+                    var $row = $('<tr>');
+                    
+                    var average = 0;
+                    for(i = 0; i < values.starts.length; i++){
+                        average = average + (values.stops[i] - values.starts[i]);
+                    }
+                    average = average/(values.starts.length);
+                    
+                    $row.append(
+                        $('<td>' + name + '</td>')
+                    );
+                    if(that.checks.length > 0){
+                        $row.append($('<td colspan="2">' + (average/1000).toPrecision(3) + 's</td>'));
+                    } else {
+                        $row.append($('<td>' + (average/1000).toPrecision(3) + 's</td>'));
+                    }
+                    $tbody.append($row);
+                });
             }
             $tbody.append($row);
             $table.append($tbody);

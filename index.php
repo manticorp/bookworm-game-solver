@@ -67,7 +67,7 @@
                 <div class="col-md-6">
                     <div class="row">
                         <div class="col-sm-12">
-                            <h2>Result</h2>
+                            <h2  id="result-title">Result</h2>
                             <div id="result"></div>
                             <div id="time-taken"></div>
                         </div>

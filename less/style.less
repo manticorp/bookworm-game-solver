@@ -26,7 +26,6 @@ input { font-family: 'Droid Sans', sans-serif }
 input {
 }
 
-
 .clearfix {
     display: block;
     clear: both;
@@ -114,6 +113,13 @@ input {
                         margin: 0;
                         text-align: center;
                         width: 26px;
+                        transition : border 500ms ease; 
+                        -webkit-transition : border 500ms ease; 
+                        -moz-transition : border 500ms ease;
+                        -o-transition : border 500ms ease;  
+                        &.unfilled {
+                            border: 3px solid red;
+                        }
                     }
                 }                   
                 &.special-1 {
