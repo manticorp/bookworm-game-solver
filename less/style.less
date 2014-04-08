@@ -194,30 +194,32 @@ input {
     background: radial-gradient(ellipse at 15% 15%, @color 0%, @color 5%, @tcolor 6%, @tcolor 100%) !important;
 }
 
+
+.letter {
+    padding: 0 2px;
+    &.special-1 {
+        background-color: fade(#15c117, 60%);
+    }
+    &.special-2 {
+        background-color: fade(#ecd025, 60%);
+    }
+    &.special-3 {
+        background-color: fade(#65c6f1, 60%);
+    }
+    &.special-4 {
+        background-color: fade(#e1e0df, 100%);
+    }
+    &.special-5 {
+        background-color: fade(#fd3b12, 60%);
+    }
+}
+
 #result {
     .result-word {
         .result-word-span {
             color: #333;
             font-weight: 900;
             font-family: Lucida Console, Consolas, Monospace;
-            .letter {
-                padding: 0 2px;
-                &.special-1 {
-                    background-color: fade(#15c117, 60%);
-                }
-                &.special-2 {
-                    background-color: fade(#ecd025, 60%);
-                }
-                &.special-3 {
-                    background-color: fade(#65c6f1, 60%);
-                }
-                &.special-4 {
-                    background-color: fade(#e1e0df, 100%);
-                }
-                &.special-5 {
-                    background-color: fade(#fd3b12, 60%);
-                }
-            }
         }
         .result-score {
             color: #333;
