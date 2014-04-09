@@ -180,6 +180,63 @@ $(function(){
         loadState();
     });
     
+    // Grid Filler
+    var lastInputChanged = false;
+    $('#fill').keyup(function(e){
+        var letter = "";
+        var special = 0;
+        
+        $(this).val($(this).val().toUpperCase());
+        if($(this).val().length > 1){
+            if($(this).val() == "QU"){
+                $(this).val("Q");
+            }
+            
+            if($(this).val().length > 2){
+                $(this).val($(this).val().slice(-1));
+                letter = $(this).val();
+                special = 0;
+                input = findFirstEmptyInput();
+                lastInputChanged = input;
+            } else {
+                var lastChar = $(this).val().slice(-1);
+                var firstChar = $(this).val().slice(0,1);
+                if(isNumber(lastChar)){
+                    special = parseInt(lastChar);
+                    letter = firstChar;
+                    input = lastInputChanged;
+                } else {
+                    special = 0;
+                    letter = lastChar;
+                    input = findFirstEmptyInput();
+                    lastInputChanged = input;
+                    $(this).val(letter);
+                }
+            }
+        } else {
+            letter = $(this).val();
+            special = 0;
+            input = findFirstEmptyInput();
+            lastInputChanged = input;
+        }
+        if(letter !== "" && typeof letter !== "undefined" && letter.match(/^[A-Za-z]+$/) !== null ){
+            input.val(letter);
+            input.data('special',special);
+            decorateInput(input);
+        }
+    });
+    
+    function findFirstEmptyInput(){
+        var input = false;
+        $('.game-cell-input').each(function(){
+            if($(this).val() === ''){
+                input = $(this);
+                return false;
+            }
+        });
+        return input;
+    }
+    
     /**
      * Time to start the game! Get dictionary, get board variant,
      * make the actual board and load any saved data from the URL!

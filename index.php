@@ -35,13 +35,16 @@
                     <h2>Input</h2>
                     <form id="controls" role="form" class="form-inline" method="POST" action="">
                         <div class="form-group">
-                            <label>Game Level
-                                <input type="text" class="form-control" id="level" name="level" placeholder="Game Level" value=1></input>
+                            <label>Game Level: 
+                                <input type="text" class="form-control" id="level" title="The level you're currently on in your game" name="level" placeholder="Game Level" value=1></input>
                             </label>
-                            <button class="btn btn-success" id="go">Go</button>
-                            <button class="btn btn-danger" id="clear">Clear</button>
-                            <button class="btn btn-info" id="saveState">Save</button>
-                            <button class="btn btn-info" id="loadState">Load</button>
+                            <label>Fill Next Empty Cell: 
+                                <input type="text" class="form-control" id="fill" title="Use this to fill the next empty cell, from top to bottom, left to right" name="fill"></input>
+                            </label>
+                            <button class="btn btn-success" id="go" title="Find words">Go</button>
+                            <button class="btn btn-danger" id="clear" title="Clear game board">Clear</button>
+                            <button class="btn btn-info" id="saveState" title="Save the game board to the URL (bookmarkable)">Save</button>
+                            <!--<button class="btn btn-info" id="loadState" title="Load the game board from the URL">Load</button>-->
                         </div>
                     </form>
                     <div id="game-container"></div>
