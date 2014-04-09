@@ -458,10 +458,22 @@ $(function(){
         
         var $tbody = $('<tbody>');
                
-        $tbody.append( $("<tr><th colspan=4>Highest Scoring</th></tr>") );
-        $tbody.append( createRow( ordered.highest ) );
-        $tbody.append( $("<tr><th colspan=4>Highest Plain</th></tr>") );
-        $tbody.append( createRow( ordered.highestPlain ) );
+        $tbody.append( $("<tr><th colspan=4>Highest Scoring Words</th></tr>") );
+        console.log(ordered);
+        $.each(ordered.highests, function(i, word){
+            $tbody.append( createRow( word ));
+        });
+        // $tbody.append( createRow( ordered.highest ) );
+        $tbody.append( $("<tr><th colspan=4>Highest Plain Words</th></tr>") );
+        $.each(ordered.highestPlains, function(i, word){
+            $tbody.append( createRow( word ));
+        });
+        // $tbody.append( createRow( ordered.highestPlain ) );
+        $tbody.append( $("<tr><th colspan=4>Longest Words</th></tr>") );
+        $.each(ordered.longests, function(i, word){
+            $tbody.append( createRow( word ));
+        });
+        // $tbody.append( createRow( ordered.longest ) );
         $tbody.append( $("<tr><th colspan=4>Others</th></tr>") );
         
         for(l = (ordered.words.length-1); l >= 0; l--){
@@ -638,17 +650,45 @@ $(function(){
         var words   = [];
         var useds   = [];
         var score, word, used, pos;
+        var highest = {
+            word: "",
+            score: 0,
+            used: {}
+        };
+        var highests = [];
         var highestPlain = {
             word: "",
             score: 0,
             used: {}
         };
+        var highestPlains = [];
+        var longest = {
+            word: "",
+            score: 0,
+            used: {}
+        };
+        var longests = [];
         $.each(results, function(key, val){
             score = calculateScore( val.used );
             word = val.word;
             used = val.used;
-            if( !hasSpecial(used) && score > highestPlain.score ){
+            if( score == highest.score ){
+                highests.push({word: word, score: score, used:used});
+            } else if( score > highest.score ){
+                highest = {word: word, score: score, used:used};
+                highests = [{word: word, score: score, used:used}];
+            }
+            if( !hasSpecial(used) && score == highestPlain.score ){
+                highestPlains.push({word: word, score: score, used:used});
+            } else if( !hasSpecial(used) && score > highestPlain.score ){
                 highestPlain = {word: word, score: score, used:used};
+                highestPlains = [{word: word, score: score, used:used}];
+            }
+            if( word.length == longest.word.length){
+                longests.push({word: word, score: score, used:used});
+            } else if( word.length > longest.word.length ){
+                longest = {word: word, score: score, used:used};
+                longests = [{word: word, score: score, used:used}];
             }
             if(scores.length === 0) {
                 scores.push(score);
@@ -661,7 +701,17 @@ $(function(){
                 useds.splice(pos,0,used);
             }
         });
-        return {scores: scores, words: words, useds: useds, highest: {word: words[words.length-1], score: scores[words.length-1], used: useds[words.length-1]}, highestPlain: highestPlain};
+        return {
+            scores: scores, 
+            words: words, 
+            useds: useds, 
+            highest: highest,
+            highests: highests,
+            highestPlain: highestPlain,
+            longest: longest,
+            highestPlains: highestPlains,
+            longests: longests
+        };
     }
     
     function hasSpecial( used ){
@@ -670,7 +720,7 @@ $(function(){
             $input  = getInputFromCoords(coords);
             special = $input.data('special');
             if(typeof special === "undefined") special = 0;
-            if(special > 0) r = true;
+            if(special > 0 && special < 5) r = true;
         });
         return r;
     }
