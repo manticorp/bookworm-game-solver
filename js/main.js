@@ -463,17 +463,20 @@ $(function(){
         $.each(ordered.highests, function(i, word){
             $tbody.append( createRow( word ));
         });
-        // $tbody.append( createRow( ordered.highest ) );
         $tbody.append( $("<tr><th colspan=4>Highest Plain Words</th></tr>") );
         $.each(ordered.highestPlains, function(i, word){
             $tbody.append( createRow( word ));
         });
-        // $tbody.append( createRow( ordered.highestPlain ) );
+        if(ordered.usesFire.length > 0){
+            $tbody.append( $("<tr><th colspan=4>Uses fire</th></tr>") );
+            $.each(ordered.usesFire, function(i, word){
+                $tbody.append( createRow( word ));
+            });
+        }
         $tbody.append( $("<tr><th colspan=4>Longest Words</th></tr>") );
         $.each(ordered.longests, function(i, word){
             $tbody.append( createRow( word ));
         });
-        // $tbody.append( createRow( ordered.longest ) );
         $tbody.append( $("<tr><th colspan=4>Others</th></tr>") );
         
         for(l = (ordered.words.length-1); l >= 0; l--){
@@ -668,6 +671,7 @@ $(function(){
             used: {}
         };
         var longests = [];
+        var usesFire = [];
         $.each(results, function(key, val){
             score = calculateScore( val.used );
             word = val.word;
@@ -690,6 +694,7 @@ $(function(){
                 longest = {word: word, score: score, used:used};
                 longests = [{word: word, score: score, used:used}];
             }
+            if(hasFire(used)) usesFire.push({word: word, score: score, used:used});
             if(scores.length === 0) {
                 scores.push(score);
                 words.push(word);
@@ -706,11 +711,12 @@ $(function(){
             words: words, 
             useds: useds, 
             highest: highest,
-            highests: highests,
             highestPlain: highestPlain,
             longest: longest,
+            highests: highests,
             highestPlains: highestPlains,
-            longests: longests
+            longests: longests,
+            usesFire: usesFire
         };
     }
     
@@ -721,6 +727,17 @@ $(function(){
             special = $input.data('special');
             if(typeof special === "undefined") special = 0;
             if(special > 0 && special < 5) r = true;
+        });
+        return r;
+    }
+    
+    function hasFire( used ){
+        var r = false;
+        $.each(used, function(key, coords){
+            $input  = getInputFromCoords(coords);
+            special = $input.data('special');
+            if(typeof special === "undefined") special = 0;
+            if(special == 5) r = true;
         });
         return r;
     }
