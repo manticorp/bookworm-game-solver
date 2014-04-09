@@ -457,29 +457,15 @@ $(function(){
         .append("<thead><tr><th>Word</th><th>Score</th><th>Controls</th></thead>");
         
         var $tbody = $('<tbody>');
+               
+        $tbody.append( $("<tr><th colspan=4>Highest Scoring</th></tr>") );
+        $tbody.append( createRow( ordered.highest ) );
+        $tbody.append( $("<tr><th colspan=4>Highest Plain</th></tr>") );
+        $tbody.append( createRow( ordered.highestPlain ) );
+        $tbody.append( $("<tr><th colspan=4>Others</th></tr>") );
+        
         for(l = (ordered.words.length-1); l >= 0; l--){
-            var $trow = $('<tr>');
-            $trow.data("used", ordered.useds[l]);
-            $trow.hover(displayUsed, unDisplayUsed);
-            
-            // The word
-            $trow.append($('<td>').append($("<a href='#' class='result-word'>" + buildColoredWord(ordered.useds[l]).html() + "</a>").data("used", ordered.useds[l])));
-            // The score
-            $trow.append('<td><span class="result-score">' + ordered.scores[l] + '</span>')
-            
-            $ccell = $('<td class="result-controls-row">');
-            $highlight = $("<button class='btn btn-xs btn-primary'>Highlight <i class='glyphicon glyphicon-pencil'></i></button>").addClass('btn').addClass('word-btn').addClass('delete-btn');
-            $highlight.data("used", ordered.useds[l]);
-            $highlight.click(highlightThis);
-            
-            $delete = $("<button class='btn btn-xs btn-danger'>Delete <i class='glyphicon glyphicon-trash'></i></button>").addClass('btn').addClass('word-btn').addClass('delete-btn');
-            $delete.data("used", ordered.useds[l]);
-            $delete.click(deleteThis);
-            
-            $ccell.append($highlight).append($delete);
-            $trow.append($ccell);
-            
-            $tbody.append($trow);
+            $tbody.append( createRow( { score: ordered.scores[l], used: ordered.useds[l], word: ordered.words[l] } ) );
         }
         $table.append($tbody);
         options.timer.addCheck("Append Table to Result");
@@ -489,6 +475,31 @@ $(function(){
             var $rCol = $('#result-col');
             $rCol.css('max-height',$(window).height() + "px");
         }
+    }
+    
+    function createRow( word ){
+        var $trow = $('<tr>');
+        $trow.data("used", word.used);
+        $trow.hover(displayUsed, unDisplayUsed);
+        
+        // The word
+        $trow.append($('<td>').append($("<a href='#' class='result-word'>" + buildColoredWord(word.used).html() + "</a>").data("used", word.used)));
+        // The score
+        $trow.append('<td><span class="result-score">' + word.score + '</span>')
+        
+        $ccell = $('<td class="result-controls-row">');
+        $highlight = $("<button class='btn btn-xs btn-primary'>Highlight <i class='glyphicon glyphicon-pencil'></i></button>");
+        $highlight.data("used", word.used);
+        $highlight.click(highlightThis);
+        
+        $delete = $("<button class='btn btn-xs btn-danger'>Delete <i class='glyphicon glyphicon-trash'></i></button>");
+        $delete.data("used", word.used);
+        $delete.click(deleteThis);
+        
+        $ccell.append($highlight).append($delete);
+        $trow.append($ccell);
+        
+        return $trow;
     }
     
     function buildColoredWord(used){
@@ -627,10 +638,18 @@ $(function(){
         var words   = [];
         var useds   = [];
         var score, word, used, pos;
+        var highestPlain = {
+            word: "",
+            score: 0,
+            used: {}
+        };
         $.each(results, function(key, val){
             score = calculateScore( val.used );
             word = val.word;
             used = val.used;
+            if( !hasSpecial(used) && score > highestPlain.score ){
+                highestPlain = {word: word, score: score, used:used};
+            }
             if(scores.length === 0) {
                 scores.push(score);
                 words.push(word);
@@ -642,16 +661,18 @@ $(function(){
                 useds.splice(pos,0,used);
             }
         });
-        return {scores: scores, words: words, useds: useds};
+        return {scores: scores, words: words, useds: useds, highest: {word: words[words.length-1], score: scores[words.length-1], used: useds[words.length-1]}, highestPlain: highestPlain};
     }
     
-    function findPos(array, item){
-        for(i = 0; i < array.length; i++){
-            if(item < array[i]){
-                return i;
-            }
-        }
-        return array.length;
+    function hasSpecial( used ){
+        var r = false;
+        $.each(used, function(key, coords){
+            $input  = getInputFromCoords(coords);
+            special = $input.data('special');
+            if(typeof special === "undefined") special = 0;
+            if(special > 0) r = true;
+        });
+        return r;
     }
     
     function calculateScore( used ){
@@ -673,8 +694,16 @@ $(function(){
             bonus = bonus + parseInt(bookworm.specialMultipliers[parseInt(special)]);
         });
         score = ((parseInt(options.level) + wordvalue) * (parseInt(bonus) + word.length)) * 10;
-        console.log(word + " ( (lv) " + options.level + " + (wv) " + wordvalue + " ) * ( (bn) " + bonus + " + (wl) " + word.length + " ) *10 = " + score );
         return score;
+    }
+    
+    function findPos(array, item){
+        for(i = 0; i < array.length; i++){
+            if(item < array[i]){
+                return i;
+            }
+        }
+        return array.length;
     }
     
     // finds all words available to gameboard
