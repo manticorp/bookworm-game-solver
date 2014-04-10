@@ -580,7 +580,7 @@ $(function(){
             $input = getInputFromCoords(val);
             special = $input.data('special');
             letter = $input.val();
-            if(letter == "Q") letter == "QU";
+            if(letter == "Q") letter = "QU";
             
             special = special || 0;
             
